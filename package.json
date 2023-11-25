@@ -23,6 +23,7 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^5.0.8",
+    "dotenv": "^16.3.1",
     "electron-acrylic-window": "^0.5.11",
     "electron-overlay-window": "^3.3.0",
     "framer-motion": "^10.16.4",

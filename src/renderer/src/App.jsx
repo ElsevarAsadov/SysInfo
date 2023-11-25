@@ -6,7 +6,7 @@ import { checkAcrylicSupport } from "../../helpers/helpers";
 function App() {
 
   return (
-    <div className={`${checkAcrylicSupport() ? '' : 'bg-[#222222]'} w-screen h-screen overflow-hidden text-white`}>
+    <div className={`${checkAcrylicSupport() ? '' : 'bg-[#222222]'} w-[300px] h-screen overflow-hidden text-white`}>
       <WindowFrame/>
       <Main/>
     </div>

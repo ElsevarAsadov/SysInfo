@@ -20,7 +20,7 @@ const destroy = ()=>{
 
 function WindowFrame() {
   return (
-    <div className={'no-user-select w-screen h-[30px] flex justify-between items-center bg-black text-white pl-1 pr-1'}>
+    <div className={'no-user-select w-[300px] h-[30px] flex justify-between items-center bg-black text-white pl-1 pr-1'}>
 
       <div>
         <Text fontSize={'xs'} fontWeight={'bold'}>SysInfo</Text>

@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 
-body {
-  width: 100vw;
+
+html,body {
+  width: 300px;
   height: 100vh;
   /* CHAKRA UI makes bg white by default we should prevent it */
   background-color: transparent !important;
