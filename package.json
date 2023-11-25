@@ -2,7 +2,7 @@
   "name": "sysinfo",
   "version": "1.0.0",
   "description": "An Electron application with React",
-  "main": "./out/main/index.js",
+  "main": "./out/main/main.js",
   "author": "example.com",
   "homepage": "https://www.electronjs.org",
   "scripts": {
@@ -23,11 +23,14 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^5.0.8",
+    "dedent": "^1.5.1",
     "dotenv": "^16.3.1",
     "electron-acrylic-window": "^0.5.11",
     "electron-overlay-window": "^3.3.0",
+    "endent": "^2.1.0",
     "framer-motion": "^10.16.4",
-    "react-icons": "^4.11.0"
+    "react-icons": "^4.11.0",
+    "systeminformation": "^5.21.18"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^1.0.1",
