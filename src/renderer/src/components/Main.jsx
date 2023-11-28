@@ -1,78 +1,88 @@
-import { Box, Card, CardBody, CardHeader, Heading, Icon, Kbd, Stack, StackDivider, Text } from "@chakra-ui/react";
-import React from "react";
-import { IoLogoWindows } from "react-icons/io";
-import {FaMemory} from 'react-icons/fa'
-import {BsFillCpuFill, BsGpuCard} from 'react-icons/bs'
+import {
+  Box,
+  Card,
+  CardBody,
+  CardHeader,
+  Heading,
+  Icon,
+  Kbd, Spinner,
+  Stack,
+  StackDivider,
+  Text
+} from "@chakra-ui/react";
+import React, { useEffect, useState } from 'react'
+import { IoLogoWindows } from 'react-icons/io'
+import { FaMemory } from 'react-icons/fa'
+import { BsFillCpuFill, BsGpuCard } from 'react-icons/bs'
+import InfoBox from './InfoBox'
+import { animate, motion, stagger, useAnimate } from 'framer-motion'
 
-const {ipcRenderer} = require('electron')
+const { ipcRenderer } = require('electron')
+
 function Main() {
+  // Listen for a message from the main process to get system informations
+  ipcRenderer.on('main.get-sys-info', (event, object) => {
+    setSysInfos(object)
+  })
+
+  const [sysInfos, setSysInfos] = useState()
+
+  const [scope, animate] = useAnimate()
+
+  useEffect(() => {
+    if (sysInfos) {
+      animate('div', { opacity: 1 }, { delay: stagger(0.1, {startDelay: 2}) })
+    }
+  }, [sysInfos])
+
   return (
-    <div className={'w-full h-full pl-2 pr-2 pt-5'}>
+    <Box className={'w-full h-full pl-2 pr-2 pt-5'}>
 
-      <Card backgroundColor={'#d3cdcd'}>
-        <CardHeader>
-          <Heading size='md'>System Information</Heading>
-        </CardHeader>
+      <motion.div animate={{ opacity: sysInfos?.cpuInfo ? 0 : 1 }}
+                  initial={{opacity: 1}}
+                  transition={{ duration: sysInfos?.cpuInfo ? .1 : 2}}>
+        <Stack
+          position={'absolute'}
+          top={'50%'}
+          left={'50%'}
+          transform={'translate(-50%, -50%)'}
+          zIndex={100}
+          justifyContent={'center'}
+          alignItems={'center'}
+        >
+          <Spinner color='red.500' />
+          <h1>Loading</h1>
+        </Stack>
+      </motion.div>
 
-        <CardBody>
-          <Stack divider={<StackDivider borderColor={'black'}/>} spacing='4'>
-            <Box className={'flex flex-col gap-2'}>
-              <Heading size='xs' textTransform='uppercase'>
-                OS:
-              </Heading>
-              <Box className={'flex items-center gap-4'}>
-                <Icon color={'black'} boxSize={6} as={IoLogoWindows}/>
-                <Text className={'user-select'}  fontSize='sm'>
-                  Windows 10
-                </Text>
-              </Box>
-            </Box>
-            <Box className={'flex flex-col gap-2'}>
-              <Heading size='xs' textTransform='uppercase'>
-                CPU
-              </Heading>
-              <Box className={'flex items-center gap-4'}>
-                <Icon color={'black'} boxSize={6} as={FaMemory}/>
-                <Text className={'user-select'} pt='2' fontSize='sm'>
-                  Intel i7 3770K
-                </Text>
-              </Box>
-            </Box>
+      <motion.div
+        animate={{ opacity: sysInfos?.cpuInfo ? 1 : 0 }}
+        initial={{opacity: 0}}
+        transition={{ ease: 'easeOut', duration: 2 }}>
 
-            <Box className={'flex flex-col gap-2'}>
+        <Card backgroundColor={'#d3cdcd'}>
+          <CardHeader>
+            <Heading size="md">System Overview</Heading>
+          </CardHeader>
 
-                <Heading size='xs' textTransform='uppercase'>
-                  RAM
-                </Heading>
-              <Box className={'flex items-center gap-4'}>
-                <Icon color={'black'} boxSize={6} as={BsFillCpuFill}/>
-                <Text className={'user-select'} pt='2' fontSize='sm'>
-                  16GB
-                </Text>
-              </Box>
-            </Box>
-            <Box className={'flex flex-col gap-2'}>
-              <Heading size='xs' textTransform='uppercase'>
-                GPU
-              </Heading>
-              <Box className={'flex items-center gap-4'}>
-                <Icon color={'black'} boxSize={6} as={BsGpuCard}/>
-                <Text className={'user-select'} pt='2' fontSize='sm'>
-                  Nvidia Geforce GTX 950 2gb 256bit
-                </Text>
-              </Box>
-            </Box>
-          </Stack>
-        </CardBody>
-      </Card>
+          <CardBody>
+            <Stack divider={<StackDivider borderColor={'black'} />} spacing="4" ref={scope}>
+              <InfoBox headerText={'OS:'} info={sysInfos?.osInfo} icon={IoLogoWindows} />
+              <InfoBox headerText={'MEMORY:'} info={sysInfos?.memoryInfo} icon={FaMemory} />
+              <InfoBox headerText={'CPU:'} info={sysInfos?.cpuInfo} icon={BsFillCpuFill} />
+              <InfoBox headerText={'GPU:'} info={sysInfos?.gpuInfo} icon={BsGpuCard} />
+            </Stack>
+          </CardBody>
+        </Card>
+      </motion.div>
 
       {/*BUTTON INFO*/}
       <span className={'fixed bottom-2.5 left-2.5 flex items-center gap-3'}>
         <Text fontSize={'md'}>Toggle Menu</Text>
         <Kbd backgroundColor={'black'}>Alt</Kbd> + <Kbd backgroundColor={'black'}>X</Kbd>
       </span>
-    </div>
-  );
+    </Box>
+  )
 }
 
-export default Main;
+export default Main

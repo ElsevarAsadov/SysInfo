@@ -5,7 +5,19 @@ import { checkAcrylicSupport, getWindowSize } from '../../helpers/helpers'
 import path from 'path'
 import icon from '../../../resources/icon.png?asset'
 import SystemInformationService from "./Services/SystemInformationService";
-const frameRate = parseInt(process.env['ANIMATION_FPS'])
+
+
+//const frameRate = parseInt(process.env['ANIMATION_FPS'])
+const frameRate = import.meta.env.MAIN_VITE_ANIMATION_FPS
+
+
+
+/**
+ * @type SystemInformationService
+ */
+
+const SYSTEM_INFORMATION = SystemInformationService.getInstance()
+
 
 export default class App {
   constructor() {
@@ -35,12 +47,15 @@ export default class App {
     this.isWindowInViewPort = true
     this.animationInterval = null
 
-    setInterval(()=>{
-      console.log(this.sysInfoService.gpuInfo)
-    }, 2000)
+    // setInterval(()=>{
+    //   console.log(this.sysInfoService.gpuInfo)
+    // }, 2000)
   }
 
   startApplication() {
+
+    // ---------------- BOOTSTRAPPING START ----------------
+
     // This method will be called when Electron has finished
     // initialization and is ready to create browser windows.
     // Some APIs can only be used after this event occurs.
@@ -54,19 +69,31 @@ export default class App {
       // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
       app.on('browser-window-created', (_, window) => {
         optimizer.watchWindowShortcuts(window)
+
+
+        //initialize application task bar icon
+        const trayHandler = new Tray(path.join('resources', 'icon.png'))
+        trayHandler.setToolTip('SysInfo')
+        trayHandler.on('click', () => this._toggleWindowAnimation())
+
       })
 
       this._listenChannels()
 
       this._initShortcuts()
 
+
+      // ++++++++++++++++++ BOOTSTRAPPING END ++++++++++++++++++
+
       this._createWindow()
 
-      app.on('activate', function () {
+      this._sendToRenderer()
+
+      app.on('activate', function() {
         // On macOS it's common to re-create a window in the app when the
         // dock icon is clicked and there are no other windows open.
         if (BrowserWindow.getAllWindows().length === 0) {
-          this.createWindow()
+          this._createWindow()
         }
       })
     })
@@ -123,7 +150,6 @@ export default class App {
 
     //toggle animation state
     this.windowAnimationState = this.windowAnimationState === 'out' ? 'in' : 'out'
-
     this.currentX = this.mainWindow.getPosition()[0]
     this.currentY = this.mainWindow.getPosition()[1]
 
@@ -132,6 +158,7 @@ export default class App {
         targetPositions[this.windowAnimationState].x,
         targetPositions[this.windowAnimationState].y
       ]
+
       this.currentX = lerp(this.currentX, targetX, (1 / frameRate) * 5)
       this.currentY = lerp(this.currentY, targetY, (1 / frameRate) * 5)
 
@@ -144,13 +171,9 @@ export default class App {
   }
 
   _createWindow() {
-    //initialize application task bar icon
-    const trayHandler = new Tray(path.join('resources', 'icon.png'))
-    trayHandler.setToolTip('SysInfo')
-    trayHandler.on('click', () => this._toggleWindowAnimation())
+
 
     const [x, y, width, height] = getWindowSize()
-
     //if platform is windows and version is 10 and above make window Arclyic style (transparent)
     if (checkAcrylicSupport()) {
       const vibrancyWindowOptions = {
@@ -176,15 +199,18 @@ export default class App {
         acceptFirstMouse: true,
         disableOnBlur: true,
         focusable: is.dev,
-        ...(process.platform === 'linux' ? { icon } : {}),
+
         webPreferences: {
           nodeIntegration: true,
           contextIsolation: false,
           sandbox: false
         }
       })
+
       this.mainWindow.setVibrancy(vibrancyWindowOptions)
-    } else {
+
+    }
+    else {
       this.mainWindow = new BrowserWindow({
         width: width,
         height: height,
@@ -201,7 +227,7 @@ export default class App {
         acceptFirstMouse: true,
         disableOnBlur: true,
         focusable: is.dev,
-        ...(process.platform === 'linux' ? { icon } : {}),
+
         webPreferences: {
           nodeIntegration: true,
           contextIsolation: false,
@@ -212,6 +238,8 @@ export default class App {
 
     this.mainWindow.on('ready-to-show', () => {
       this.mainWindow.show()
+
+      //which indicates open window when first launch application
       this._toggleWindowAnimation()
     })
 
@@ -231,11 +259,35 @@ export default class App {
 
   _listenChannels() {
     //event type + event name
-    ipcMain.handle('window.minimize', () => {
-      this._toggleWindowAnimation()
+    ipcMain.handle('window.minimize', async() => {
+     this._toggleWindowAnimation()
     })
     ipcMain.handle('window.destroy', () => {
       this.mainWindow.destroy()
     })
+  }
+
+  _sendToRenderer(){
+    // Send a message to the renderer process after the window is ready
+    this.mainWindow.webContents.on('did-finish-load', async() => {
+
+
+      SYSTEM_INFORMATION.getSystemInformation()
+        .then(()=>{
+            this.mainWindow.webContents.send("main.get-sys-info", {
+              "osInfo" : SYSTEM_INFORMATION.osInfo,
+              "cpuInfo" : SYSTEM_INFORMATION.cpuInfo,
+              "gpuInfo" : SYSTEM_INFORMATION.gpuInfo,
+              "memoryInfo" : SYSTEM_INFORMATION.memoryInfo
+            })
+
+      })
+        .catch(err=>{
+          //TODO ...
+          setTimeout(()=>{process.exit(1)}, 2000)
+      })
+
+
+    });
   }
 }

@@ -9,20 +9,25 @@ const dedent = require('dedent')
   there is no need to perform expensive information call everytime
 
   BE CAREFUL SINCE SINGLETON INSTANCE LOCATION IS IN MEMORY OF PROCESS WHICH CREATES IT YOU CANNOT
-  ACCESS IT THROUGH RENDERER PROCESS.WE NEED TO CREATE IT IN MAIN PROCESS AND SEND WHOLE OBJECT TO RENDERER IN BOOTSTRAPPING STAGE
+  ACCESS IT THROUGH RENDERER PROCESS.WE NEED TO CREATE IT IN MAIN PROCESS AND SEND WHOLE OBJECT TO RENDERER USING IPC DURING BOOTSTRAPPING STAGE
 
  */
 export default class SystemInformationService {
+
+  static _instance;
+
   osInfo
   cpuInfo
   memoryInfo
   gpuInfo
 
-  static _instance;
+  _pointerToInformationGetter;
 
   constructor() {
-    this._getSystemInformation()
+    this._pointerToInformationGetter = this.getSystemInformation()
   }
+
+
   static getInstance(){
     if(SystemInformationService._instance === undefined){
       SystemInformationService._instance =  new SystemInformationService()
@@ -30,14 +35,21 @@ export default class SystemInformationService {
     return SystemInformationService._instance;
   }
 
-  async _getSystemInformation() {
+  async getSystemInformation() {
+
+    //this code prevents multiple useless async call
+    //this code should only one time called then we can use this information entire app life cycle
+    if(this._pointerToInformationGetter){
+      return this._pointerToInformationGetter
+    }
     try {
-      ;[this.osInfo, this.cpuInfo, this.memoryInfo, this.gpuInfo] = await Promise.all([
-        SystemInformationService.getCpuInfo(),
+      [this.osInfo, this.cpuInfo, this.memoryInfo, this.gpuInfo] = await Promise.all([
         SystemInformationService.getOSInfo(),
+        SystemInformationService.getCpuInfo(),
         SystemInformationService.getMemInfo(),
         SystemInformationService.getGpuInfo()
       ])
+
     } catch (e) {
       // ---- TODO: Make communication between main and renderer to handle inner exceptions ---
 
@@ -45,6 +57,7 @@ export default class SystemInformationService {
 
       // ---- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ---
     }
+
   }
 
   static async getCpuInfo() {
@@ -91,7 +104,7 @@ export default class SystemInformationService {
 
     return dedent`
 
-      ${name} ${vram}Mb
+      ${name} ${vram}MB
 
     `
   }
@@ -102,4 +115,3 @@ export default class SystemInformationService {
 
 }
 
-//module.exports = SystemInformationService
