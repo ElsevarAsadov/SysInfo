@@ -4,6 +4,10 @@ import { BrowserWindow as AcrylicBrowserWindow } from 'electron-acrylic-window'
 import { checkAcrylicSupport, getWindowSize } from '../../helpers/helpers'
 import path from 'path'
 import icon from '../../../resources/icon.png?asset'
+
+
+
+
 import SystemInformationService from "./Services/SystemInformationService";
 
 
@@ -16,7 +20,7 @@ const frameRate = import.meta.env.MAIN_VITE_ANIMATION_FPS
  * @type SystemInformationService
  */
 
-const SYSTEM_INFORMATION = SystemInformationService.getInstance()
+
 
 
 export default class App {
@@ -26,7 +30,6 @@ export default class App {
      * Getting system information takes some seconds so information
      * properties can be undefined when app is bootstrapping (first few seconds)
      */
-    this.sysInfoService = SystemInformationService.getInstance()
 
     /**
      * @type BrowserWindow
@@ -42,6 +45,8 @@ export default class App {
      * @type Number
      */
     this.currentY
+
+    this._sysInfoInstance;
 
     this.windowAnimationState = 'out'
     this.isWindowInViewPort = true
@@ -111,6 +116,7 @@ export default class App {
   _initShortcuts() {
     globalShortcut.register('Alt+X', () => this._toggleWindowAnimation())
   }
+
   _toggleWindowAnimation() {
     /* ---+ TODO: check if user uses any application which is fullscreen and do height resizing according +--- */
 
@@ -171,7 +177,6 @@ export default class App {
   }
 
   _createWindow() {
-
 
     const [x, y, width, height] = getWindowSize()
     //if platform is windows and version is 10 and above make window Arclyic style (transparent)
@@ -241,6 +246,7 @@ export default class App {
 
       //which indicates open window when first launch application
       this._toggleWindowAnimation()
+      this._sysInfoInstance = SystemInformationService.getInstance()
     })
 
     this.mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -272,13 +278,13 @@ export default class App {
     this.mainWindow.webContents.on('did-finish-load', async() => {
 
 
-      SYSTEM_INFORMATION.getSystemInformation()
+      this._sysInfoInstance.getSystemInformation()
         .then(()=>{
             this.mainWindow.webContents.send("main.get-sys-info", {
-              "osInfo" : SYSTEM_INFORMATION.osInfo,
-              "cpuInfo" : SYSTEM_INFORMATION.cpuInfo,
-              "gpuInfo" : SYSTEM_INFORMATION.gpuInfo,
-              "memoryInfo" : SYSTEM_INFORMATION.memoryInfo
+              "osInfo" : this._sysInfoInstance.osInfo,
+              "cpuInfo" : this._sysInfoInstance.cpuInfo,
+              "gpuInfo" : this._sysInfoInstance.gpuInfo,
+              "memoryInfo" : this._sysInfoInstance.memoryInfo
             })
 
       })

@@ -8,7 +8,7 @@ const dedent = require('dedent')
   and it is static (mean the system information will not change in the application runtime)
   there is no need to perform expensive information call everytime
 
-  BE CAREFUL SINCE SINGLETON INSTANCE LOCATION IS IN MEMORY OF PROCESS WHICH CREATES IT YOU CANNOT
+  BE CAREFUL SINCE SINGLETON INTSANCE LOCATION IS IN MEMORY OF PROCESS WHICH CREATES IT YOU CANNOT
   ACCESS IT THROUGH RENDERER PROCESS.WE NEED TO CREATE IT IN MAIN PROCESS AND SEND WHOLE OBJECT TO RENDERER USING IPC DURING BOOTSTRAPPING STAGE
 
  */
@@ -24,6 +24,7 @@ export default class SystemInformationService {
   _pointerToInformationGetter;
 
   constructor() {
+
     this._pointerToInformationGetter = this.getSystemInformation()
   }
 
@@ -42,6 +43,9 @@ export default class SystemInformationService {
     if(this._pointerToInformationGetter){
       return this._pointerToInformationGetter
     }
+
+    console.log("getting info...")
+
     try {
       [this.osInfo, this.cpuInfo, this.memoryInfo, this.gpuInfo] = await Promise.all([
         SystemInformationService.getOSInfo(),
