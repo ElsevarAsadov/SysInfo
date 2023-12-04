@@ -10,7 +10,7 @@ function InfoBox({headerText, info, icon}) {
       </Heading>
       <Box className={'flex items-center gap-4 ml-2'}>
         <Icon color={'black'} boxSize={6} as={icon}/>
-        <Text className={'user-select'}  fontSize='sm'>
+        <Text className={'user-select'}>
           {info}
         </Text>
       </Box>

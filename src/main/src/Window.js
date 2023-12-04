@@ -1,36 +1,17 @@
 import { app, shell, screen, ipcMain, globalShortcut, Tray, BrowserWindow } from 'electron'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { BrowserWindow as AcrylicBrowserWindow } from 'electron-acrylic-window'
-import { checkAcrylicSupport, getWindowSize } from '../../helpers/helpers'
+import { checkAcrylicSupport, getWindowPositions, lerp } from "../../helpers/helpers";
 import path from 'path'
-import icon from '../../../resources/icon.png?asset'
-
-
-
-
 import SystemInformationService from "./Services/SystemInformationService";
-
+import icon from '../../../resources/icon.png?asset'
 
 //const frameRate = parseInt(process.env['ANIMATION_FPS'])
 const frameRate = import.meta.env.MAIN_VITE_ANIMATION_FPS
 
 
-
-/**
- * @type SystemInformationService
- */
-
-
-
-
 export default class App {
   constructor() {
-    /**
-     * @type {SystemInformationService}
-     * Getting system information takes some seconds so information
-     * properties can be undefined when app is bootstrapping (first few seconds)
-     */
-
     /**
      * @type BrowserWindow
      */
@@ -46,6 +27,9 @@ export default class App {
      */
     this.currentY
 
+    /**
+     * @type SystemInformationService
+     */
     this._sysInfoInstance;
 
     this.windowAnimationState = 'out'
@@ -57,15 +41,13 @@ export default class App {
     // }, 2000)
   }
 
-  startApplication() {
-
-    // ---------------- BOOTSTRAPPING START ----------------
-
+  start() {
     // This method will be called when Electron has finished
     // initialization and is ready to create browser windows.
     // Some APIs can only be used after this event occurs.
 
     app.whenReady().then(() => {
+
       // Set app user model id for windows
       electronApp.setAppUserModelId('com.electron')
 
@@ -74,25 +56,12 @@ export default class App {
       // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
       app.on('browser-window-created', (_, window) => {
         optimizer.watchWindowShortcuts(window)
-
-
-        //initialize application task bar icon
-        const trayHandler = new Tray(path.join('resources', 'icon.png'))
-        trayHandler.setToolTip('SysInfo')
-        trayHandler.on('click', () => this._toggleWindowAnimation())
-
       })
 
+      this._initAppTray()
       this._listenChannels()
-
       this._initShortcuts()
-
-
-      // ++++++++++++++++++ BOOTSTRAPPING END ++++++++++++++++++
-
       this._createWindow()
-
-      this._sendToRenderer()
 
       app.on('activate', function() {
         // On macOS it's common to re-create a window in the app when the
@@ -116,16 +85,18 @@ export default class App {
   _initShortcuts() {
     globalShortcut.register('Alt+X', () => this._toggleWindowAnimation())
   }
+  
+
+  _initAppTray(){
+    //initialize application task bar icon
+    const trayHandler = new Tray(path.join('resources', 'icon.png'))
+    trayHandler.setToolTip('SysInfo')
+    trayHandler.on('click', () => this._toggleWindowAnimation())
+  }
 
   _toggleWindowAnimation() {
     /* ---+ TODO: check if user uses any application which is fullscreen and do height resizing according +--- */
-
-    //standard lerp function makes smooth movement
-    function lerp(start, end, t) {
-      return start + t * (end - start)
-    }
-
-    const [x, y, width, height] = getWindowSize()
+    const {x, y, display_width, display_height} = getWindowPositions()
 
     //x, y positions of window for each animation state. each represents where window goes in the end of animation
     const targetPositions = {
@@ -134,13 +105,14 @@ export default class App {
         y: 0
       },
       out: {
-        x: width + 200,
+        x: display_width + 200,
         y: 0
       }
     }
 
     //if animation is not allowed then do not nothing
     if (!this.isWindowInViewPort) return
+
     //block further animation
     this.isWindowInViewPort = false
 
@@ -178,75 +150,85 @@ export default class App {
 
   _createWindow() {
 
-    const [x, y, width, height] = getWindowSize()
+    const {x, y,  display_height, workingAreaHeight} = getWindowPositions()
+
+    const generalWindowOptions = {
+      width:   parseInt(import.meta.env.MAIN_VITE_WINDOW_WIDTH),
+      height: display_height, //fulheight
+      show: false,
+      x: x * 2,
+      y: y,
+      movable: false,
+      resizable: false,
+      skipTaskbar: true,
+      transparent: true,
+      frame: false,
+      alwaysOnTop: true,
+      autoHideMenuBar: true,
+      acceptFirstMouse: true,
+      disableOnBlur: true,
+      focusable: is.dev,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+        sandbox: false
+      }
+    }
+    const vibrancyWindowOptions = {
+      theme: '#22222299',
+      effect: 'acrylic',
+      maximumRefreshRate: 60,
+      disableOnBlur: false
+    }
+
     //if platform is windows and version is 10 and above make window Arclyic style (transparent)
     if (checkAcrylicSupport()) {
-      const vibrancyWindowOptions = {
-        theme: '#22222299',
-        effect: 'acrylic',
-        maximumRefreshRate: 60,
-        disableOnBlur: false
-      }
 
-      this.mainWindow = new AcrylicBrowserWindow({
-        width: width,
-        height: height,
-        show: false,
-        x: screen.getPrimaryDisplay().workAreaSize.width + width,
-        y: y,
-        movable: false,
-        resizable: false,
-        skipTaskbar: true,
-        transparent: true,
-        frame: false,
-        alwaysOnTop: true,
-        autoHideMenuBar: true,
-        acceptFirstMouse: true,
-        disableOnBlur: true,
-        focusable: is.dev,
-
-        webPreferences: {
-          nodeIntegration: true,
-          contextIsolation: false,
-          sandbox: false
-        }
-      })
-
+      this.mainWindow = new AcrylicBrowserWindow(generalWindowOptions)
       this.mainWindow.setVibrancy(vibrancyWindowOptions)
 
     }
     else {
-      this.mainWindow = new BrowserWindow({
-        width: width,
-        height: height,
-        show: false,
-        x: screen.getPrimaryDisplay().workAreaSize.width + width,
-        y: y,
-        movable: false,
-        resizable: false,
-        skipTaskbar: true,
-        transparent: true,
-        frame: false,
-        alwaysOnTop: true,
-        autoHideMenuBar: true,
-        acceptFirstMouse: true,
-        disableOnBlur: true,
-        focusable: is.dev,
-
-        webPreferences: {
-          nodeIntegration: true,
-          contextIsolation: false,
-          sandbox: false
-        }
-      })
+      this.mainWindow = new BrowserWindow(generalWindowOptions)
     }
 
     this.mainWindow.on('ready-to-show', () => {
       this.mainWindow.show()
-
       //which indicates open window when first launch application
       this._toggleWindowAnimation()
+
       this._sysInfoInstance = SystemInformationService.getInstance()
+      this._sysInfoInstance.getSystemInformation()
+        .then(()=>{
+          const sysData = {
+            "osInfo" : this._sysInfoInstance.osInfo,
+            "cpuInfo" : this._sysInfoInstance.cpuInfo,
+            "gpuInfo" : this._sysInfoInstance.gpuInfo,
+            "memoryInfo" : this._sysInfoInstance.memoryInfo
+          }
+          this._sendToRenderer('main.get-sys-info', sysData, false)
+        })
+        .catch(err=>{
+          //TODO ...
+          console.error(err)
+          setTimeout(()=>{process.exit(1)}, 2000)
+        })
+
+
+      screen.on("display-metrics-changed", ()=>{
+        const {x, y, display_width, display_height, workingAreaHeight} = getWindowPositions()
+        this._sendToRenderer("main.set-height", workingAreaHeight, false)
+        //if animation runs cut it off
+        clearInterval(this.animationInterval);
+
+        //always be on the right left side even the active window changes
+        this.mainWindow.setPosition(this.windowAnimationState === 'out' ? x * 2 : x, y)
+        //always keep the size if active display changes
+        //electron bug --> https://github.com/electron/electron/issues/15560
+        this.mainWindow.setMinimumSize(300, display_height);
+        this.mainWindow.setSize(300, display_height);
+
+      })
     })
 
     this.mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -273,27 +255,16 @@ export default class App {
     })
   }
 
-  _sendToRenderer(){
-    // Send a message to the renderer process after the window is ready
-    this.mainWindow.webContents.on('did-finish-load', async() => {
+  _sendToRenderer(msg, data, afterFinishLoad = true){
+    if(afterFinishLoad === true){
+      // Send a message to the renderer process after the window is ready
+      this.mainWindow.webContents.on('did-finish-load', async() => {
+        this.mainWindow.webContents.send(msg, data);
+      });
+    }
+    else{
+      this.mainWindow.webContents.send(msg, data);
+    }
 
-
-      this._sysInfoInstance.getSystemInformation()
-        .then(()=>{
-            this.mainWindow.webContents.send("main.get-sys-info", {
-              "osInfo" : this._sysInfoInstance.osInfo,
-              "cpuInfo" : this._sysInfoInstance.cpuInfo,
-              "gpuInfo" : this._sysInfoInstance.gpuInfo,
-              "memoryInfo" : this._sysInfoInstance.memoryInfo
-            })
-
-      })
-        .catch(err=>{
-          //TODO ...
-          setTimeout(()=>{process.exit(1)}, 2000)
-      })
-
-
-    });
   }
 }

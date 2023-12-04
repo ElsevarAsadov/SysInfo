@@ -10,24 +10,30 @@ import {
   StackDivider,
   Text
 } from "@chakra-ui/react";
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { IoLogoWindows } from 'react-icons/io'
 import { FaMemory } from 'react-icons/fa'
 import { BsFillCpuFill, BsGpuCard } from 'react-icons/bs'
 import InfoBox from './InfoBox'
 import { animate, motion, stagger, useAnimate } from 'framer-motion'
+import Test from "./CpuChart";
 
 const { ipcRenderer } = require('electron')
 
 function Main() {
-  // Listen for a message from the main process to get system informations
-  ipcRenderer.on('main.get-sys-info', (event, object) => {
-    setSysInfos(object)
-  })
-
   const [sysInfos, setSysInfos] = useState()
-
   const [scope, animate] = useAnimate()
+
+  // Listen for a message from the main process to get system informations
+  useLayoutEffect(()=>{
+    ipcRenderer.on('main.get-sys-info', (event, data) => {
+      setSysInfos(data)
+    })
+
+    // ipcRenderer.on("main.set-bottom-margin", (event, data)=>{
+    //   console.log(data)
+    // })
+  })
 
   useEffect(() => {
     if (sysInfos) {
@@ -36,8 +42,7 @@ function Main() {
   }, [sysInfos])
 
   return (
-    <Box className={'w-full h-full pl-2 pr-2 pt-5'}>
-
+    <Box className={'w-full pl-2 pr-2 pt-5'}>
       <motion.div animate={{ opacity: sysInfos?.cpuInfo ? 0 : 1 }}
                   initial={{opacity: 1}}
                   transition={{ duration: sysInfos?.cpuInfo ? .1 : 2}}>
@@ -60,6 +65,8 @@ function Main() {
         initial={{opacity: 0}}
         transition={{ ease: 'easeOut', duration: 2 }}>
 
+        <Test/>
+
         <Card backgroundColor={'#d3cdcd'}>
           <CardHeader>
             <Heading size="md">System Overview</Heading>
@@ -76,11 +83,7 @@ function Main() {
         </Card>
       </motion.div>
 
-      {/*BUTTON INFO*/}
-      <span className={'fixed bottom-2.5 left-2.5 flex items-center gap-3'}>
-        <Text fontSize={'md'}>Toggle Menu</Text>
-        <Kbd backgroundColor={'black'}>Alt</Kbd> + <Kbd backgroundColor={'black'}>X</Kbd>
-      </span>
+
     </Box>
   )
 }

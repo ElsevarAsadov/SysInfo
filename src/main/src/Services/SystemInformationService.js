@@ -44,8 +44,6 @@ export default class SystemInformationService {
       return this._pointerToInformationGetter
     }
 
-    console.log("getting info...")
-
     try {
       [this.osInfo, this.cpuInfo, this.memoryInfo, this.gpuInfo] = await Promise.all([
         SystemInformationService.getOSInfo(),

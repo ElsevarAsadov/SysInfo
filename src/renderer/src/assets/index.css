@@ -17,6 +17,14 @@ html,body {
   box-sizing: border-box;
 }
 
+body{
+  overflow-x: hidden;
+}
+::-webkit-scrollbar {
+  width: 0px;
+}
+
+
 p, h1, h2, h3, h4, h5, h6, span{
   -webkit-user-select: none;
 }
@@ -27,4 +35,8 @@ p, h1, h2, h3, h4, h5, h6, span{
 
 .user-select{
   -webkit-user-select: text;
+}
+
+.canvasjs-chart-credit{
+  display: none;
 }
