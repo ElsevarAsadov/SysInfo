@@ -1,5 +1,4 @@
 const si = require('systeminformation')
-const dedent = require('dedent')
 
 
 /* Singleton Pattern:
@@ -63,57 +62,22 @@ export default class SystemInformationService {
   }
 
   static async getCpuInfo() {
-    const { manufacturer, brand, physicalCores, cores } = await si.cpu()
-    return dedent`
-
-    ${manufacturer ?? 'Unknown'} ${brand ?? 'Unknown'} ${physicalCores ?? 'Unknown'} \
-    ${physicalCores > 1 ? 'Cores' : ' Core'}, ${cores ?? 'Unknown'} ${
-      cores > 1 ? 'Threads' : 'Thread'
-    }`
+    return await si.cpu()
   }
 
   static async getOSInfo() {
-    const { platform, release, arch } = await si.osInfo()
-    return dedent`
+    return await si.osInfo()
 
-      ${platform ?? 'Unknown'} ${release ?? 'Unknown'} ${arch ?? 'Unknown'}
-
-    `
   }
 
   static async getMemInfo() {
-    const [memInfo, memLayout] = await Promise.all([si.mem(), si.memLayout()])
-
-    let { total } = memInfo
-
-    //------- TODO: Make nice ui for multiple ram socket and show each ------
-
-    const { type, clockSpeed } = memLayout[0]
-
-    //------- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ------
-
-    total = SystemInformationService.convertByteToGb(total).toFixed(1)  // GB
-
-    return dedent`
-
-      ${total}GB ${type} ${clockSpeed}Mhz
-
-    `
+    return await Promise.all([si.mem(), si.memLayout()])
   }
 
   static async getGpuInfo(){
-    let {controllers : [{name, vram}]} = await si.graphics()
-
-    return dedent`
-
-      ${name} ${vram}MB
-
-    `
+    return await si.graphics()
   }
 
-  static convertByteToGb(byte) {
-    return byte / 1024 ** 3
-  }
 
 }
 

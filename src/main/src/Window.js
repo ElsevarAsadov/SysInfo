@@ -4,10 +4,7 @@ import { BrowserWindow as AcrylicBrowserWindow } from 'electron-acrylic-window'
 import { checkAcrylicSupport, getWindowPositions, lerp } from "../../helpers/helpers";
 import path from 'path'
 import SystemInformationService from "./Services/SystemInformationService";
-import icon from '../../../resources/icon.png?asset'
-
-//const frameRate = parseInt(process.env['ANIMATION_FPS'])
-const frameRate = import.meta.env.MAIN_VITE_ANIMATION_FPS
+import globals from "../../globals"
 
 
 export default class App {
@@ -35,11 +32,7 @@ export default class App {
     this.windowAnimationState = 'out'
     this.isWindowInViewPort = true
     this.animationInterval = null
-
-    // setInterval(()=>{
-    //   console.log(this.sysInfoService.gpuInfo)
-    // }, 2000)
-  }
+  }W
 
   start() {
     // This method will be called when Electron has finished
@@ -85,7 +78,7 @@ export default class App {
   _initShortcuts() {
     globalShortcut.register('Alt+X', () => this._toggleWindowAnimation())
   }
-  
+
 
   _initAppTray(){
     //initialize application task bar icon
@@ -95,8 +88,7 @@ export default class App {
   }
 
   _toggleWindowAnimation() {
-    /* ---+ TODO: check if user uses any application which is fullscreen and do height resizing according +--- */
-    const {x, y, display_width, display_height} = getWindowPositions()
+    const{x, display_width} = getWindowPositions()
 
     //x, y positions of window for each animation state. each represents where window goes in the end of animation
     const targetPositions = {
@@ -137,24 +129,25 @@ export default class App {
         targetPositions[this.windowAnimationState].y
       ]
 
-      this.currentX = lerp(this.currentX, targetX, (1 / frameRate) * 5)
-      this.currentY = lerp(this.currentY, targetY, (1 / frameRate) * 5)
+      this.currentX = lerp(this.currentX, targetX, 0.1)
+      this.currentY = lerp(this.currentY, targetY, 0.1)
 
       this.mainWindow.setPosition(Math.round(this.currentX), Math.round(this.currentY))
 
+      // if animation is end or not
       if (Math.round(this.currentX) === targetX && Math.round(this.currentY) === targetY) {
         clearInterval(this.animationInterval)
       }
-    }, 1000 / frameRate)
+    }, 1000 / globals.ANIMATION_FPS)
   }
 
   _createWindow() {
 
-    const {x, y,  display_height, workingAreaHeight} = getWindowPositions()
+    const {x, y,  display_height} = getWindowPositions()
 
     const generalWindowOptions = {
-      width:   parseInt(import.meta.env.MAIN_VITE_WINDOW_WIDTH),
-      height: display_height, //fulheight
+      width:   parseInt(globals.WINDOW_WIDTH),
+      height: display_height, //full height
       show: false,
       x: x * 2,
       y: y,
@@ -177,7 +170,7 @@ export default class App {
     const vibrancyWindowOptions = {
       theme: '#22222299',
       effect: 'acrylic',
-      maximumRefreshRate: 60,
+      maximumRefreshRate: globals.ANIMATION_FPS,
       disableOnBlur: false
     }
 

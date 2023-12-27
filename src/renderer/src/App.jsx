@@ -1,8 +1,9 @@
 import WindowFrame from "./components/WindowFrame";
 import Main from "./components/Main";
 import { checkAcrylicSupport } from "../../helpers/helpers";
-import React, { useEffect, useLayoutEffect, useRef } from "react";
-import { Kbd, Text } from "@chakra-ui/react";
+import React, {  useLayoutEffect, useRef } from "react";
+import { Stack } from "@chakra-ui/react";
+import ButtonInfo from "./components/ButtonInfo";
 
 const { ipcRenderer } = require('electron')
 
@@ -17,15 +18,28 @@ function App() {
 
 
   return (
-    <div ref={containerRef} className={`${checkAcrylicSupport() ? `` : 'bg-[#222222]'} flex flex-col relative w-[300px] min-h-screen overflow-hidden text-white `}>
+    <Stack maxHeight={'100vh'}>
+
       <WindowFrame/>
+
+    <Stack
+      ref={containerRef}
+      backgroundColor={checkAcrylicSupport() ? `transparent` : 'bg-[#222222]'}
+      flex={1}
+      position={'relative'}
+      width={'300px'}
+      overflow={'scroll'}
+      color={'text'}
+      >
+
       <Main/>
-      {/*BUTTON INFO*/}
-      <span className={'flex items-center gap-3 mt-auto pl-2 pb-1'}>
-        <Text fontSize={'md'}>Toggle Menu</Text>
-        <Kbd backgroundColor={'black'}>Alt</Kbd> + <Kbd backgroundColor={'black'}>X</Kbd>
-      </span>
-    </div>
+
+
+    </Stack>
+
+      <ButtonInfo/>
+
+    </Stack>
   )
 }
 

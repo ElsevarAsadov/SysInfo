@@ -5,14 +5,17 @@ import { motion } from 'framer-motion'
 function InfoBox({headerText, info, icon}) {
   return (
     <Box  as={motion.div} initial={{ opacity: 0 }}  className={'flex flex-col gap-2'}>
+
       <Heading size='xs' textTransform='uppercase'>
         {headerText}
       </Heading>
+
       <Box className={'flex items-center gap-4 ml-2'}>
+
         <Icon color={'black'} boxSize={6} as={icon}/>
-        <Text className={'user-select'}>
-          {info}
-        </Text>
+
+        <Text className={'user-select'}>{info}</Text>
+
       </Box>
     </Box>
   );

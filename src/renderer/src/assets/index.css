@@ -21,7 +21,12 @@ body{
   overflow-x: hidden;
 }
 ::-webkit-scrollbar {
-  width: 0px;
+  width: 7px;
+}
+
+::-webkit-scrollbar-thumb{
+  user-select: all;
+  background-color: white;
 }
 
 
@@ -35,8 +40,4 @@ p, h1, h2, h3, h4, h5, h6, span{
 
 .user-select{
   -webkit-user-select: text;
-}
-
-.canvasjs-chart-credit{
-  display: none;
 }

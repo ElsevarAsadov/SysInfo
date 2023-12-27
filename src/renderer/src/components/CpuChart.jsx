@@ -1,70 +1,52 @@
-import React, { useEffect, useRef } from 'react';
-import CanvasJSReact from '@canvasjs/react-charts';
+import React, { useState, useEffect } from 'react';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 
-const CanvasJS = CanvasJSReact.CanvasJS;
-const CanvasJSChart = CanvasJSReact.CanvasJSChart;
-const updateInterval = 500;
+//plugins see chartjs docs I do not have any clue wtf happens here :)))
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const Test = () => {
-  const chartRef = useRef(null);
+const options = {
+  responsive: true,
+  plugins: {
+    legend: false,
+  },
+  maintainAspectRatio: false, //important
+};
 
-  const updateChart = () => {
-    const dpsColor = [];
-    let dpsTotal = 0;
-    let deltaY, yVal;
-    const dps = chartRef.current.options.data[0].dataPoints;
-    const chart = chartRef.current;
+const labels = ['Core 1', 'Core 2',  'Core 3',];
 
-    for (let i = 0; i < dps.length; i++) {
-      deltaY = Math.round(2 + Math.random() * (-2 - 2));
-      yVal = deltaY + dps[i].y > 0 ? (deltaY + dps[i].y < 100 ? dps[i].y + deltaY : 100) : 0;
-      dpsColor[i] = yVal >= 90 ? "#e40000" : yVal >= 70 ? "#ec7426" : yVal >= 50 ? "#81c2ea" : "#88df86";
-      dps[i] = { label: "Core " + (i + 1), y: yVal, color: dpsColor[i] };
-      dpsTotal += yVal;
-    }
-
-    chart.options.data[0].dataPoints = dps;
-    chart.options.title.text = "CPU Usage " + Math.round(dpsTotal / 6) + "%";
-    chart.render();
-  };
+export default function CpuChart() {
+  const [data, setData] = useState({
+    labels,
+    datasets: [
+      {
+        data: [69, 69, 69],
+        backgroundColor: '#d3cdcd',
+      },
+    ],
+  });
 
   useEffect(() => {
-    const intervalId = setInterval(updateChart, updateInterval);
+    // re-render data
+    const intervalId = setInterval(() => {
+      setData((prevData) => (
+        {
+          ...prevData,
+
+        datasets: prevData.datasets.map((dataset) => ({
+          ...dataset,
+          data: dataset.data.map(() => Math.random()),
+        }
+        )),
+
+      }
+      ));
+    }, 2000);
+
     return () => clearInterval(intervalId);
   }, []);
 
-  const options = {
-    theme: "dark2",
-    title: {
-      text: "CPU Usage",
-    },
-    subtitles: [{
-      text: "Intel Core i7 980X @ 3.33GHz",
-    }],
-    data: [{
-      type: "column",
-      yValueFormatString: "#,###'%'",
-      indexLabel: "{y}",
-      dataPoints: [
-        { label: "Core 1", y: 68 },
-        { label: "Core 2", y: 3 },
-        { label: "Core 3", y: 8 },
-        { label: "Core 4", y: 87 },
-        { label: "Core 5", y: 2 },
-        { label: "Core 6", y: 6 },
-      ],
-    }],
-    height: 200,
-    backgroundColor: "transparent",
-    grid: null,
-  };
+  return <Bar  options={ options } data={data} />
 
-  return (
-    <div>
-      <CanvasJSChart options={options} onRef={ref => (chartRef.current = ref)} />
-      {/* You can get reference to the chart instance as shown above using onRef. This allows you to access all chart properties and methods */}
-    </div>
-  );
-};
+}
 
-export default Test;

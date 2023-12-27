@@ -1,7 +1,5 @@
-import { FaRegWindowMinimize} from "react-icons/fa"
 import { AiOutlineClose } from "react-icons/ai";
-import React from "react";
-import { Tooltip, Text } from "@chakra-ui/react";
+import { Tooltip, Text, Flex, Box } from "@chakra-ui/react";
 import { BsArrowBarRight } from "react-icons/bs";
 
 
@@ -20,27 +18,46 @@ const destroy = ()=>{
 
 function WindowFrame() {
   return (
-    <div className={'no-user-select w-[300px] h-[30px] flex justify-between items-center bg-black text-white pl-1 pr-1'}>
-
-      <div>
+    <Flex
+        justifyContent={"space-between"}
+        zIndex={40}
+        width={'300px'} //TODO
+        height={'30px'}
+        background={'black'} //TODO
+        color={'white'} //TODO
+        padding={'0px 4px'}>
+      <Box>
         <Text fontSize={'xs'} fontWeight={'bold'}>SysInfo</Text>
-      </div>
+      </Box>
 
-      <div className={'flex items-center justify-between gap-3'}>
+      <Flex gap={'10px'} justifyContent={'space-between'}>
+
         <Tooltip fontSize={'xs'} label="Hide" margin={2} openDelay={500} hasArrow arrowSize={15}>
-          <div className={'hover:cursor-pointer'}>
+
+            <Box _hover={{
+              cursor: "pointer"
+          }}>
+
             <BsArrowBarRight onClick={minimize}/>
-          </div>
+
+          </Box>
+
         </Tooltip>
 
         <Tooltip fontSize={'xs'} label="Close" margin={2} openDelay={500} hasArrow arrowSize={15}>
-          <div className={'hover:cursor-pointer'}>
+
+            <Box hover={{
+                cursor: "pointer"
+            }}>
+
             <AiOutlineClose onClick={destroy}/>
-          </div>
+
+          </Box>
+
         </Tooltip>
 
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   );
 }
 

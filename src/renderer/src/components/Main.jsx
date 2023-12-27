@@ -1,90 +1,129 @@
-import {
-  Box,
-  Card,
-  CardBody,
-  CardHeader,
-  Heading,
-  Icon,
-  Kbd, Spinner,
-  Stack,
-  StackDivider,
-  Text
-} from "@chakra-ui/react";
-import React, { useEffect, useLayoutEffect, useState } from "react";
+import { Box, Card, CardBody, CardHeader, Heading, Container, Spinner, Stack, StackDivider, } from "@chakra-ui/react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { IoLogoWindows } from 'react-icons/io'
 import { FaMemory } from 'react-icons/fa'
 import { BsFillCpuFill, BsGpuCard } from 'react-icons/bs'
 import InfoBox from './InfoBox'
-import { animate, motion, stagger, useAnimate } from 'framer-motion'
-import Test from "./CpuChart";
+import { motion, stagger, useAnimate } from 'framer-motion'
+import CpuChart from "./CpuChart";
+import Loading from "./Loading";
+import dedent from "dedent";
+import { convertByteToGb } from "../../../helpers/helpers";
+import MemoryInfo from "./MemoryInfo";
 
 const { ipcRenderer } = require('electron')
 
 function Main() {
   const [sysInfos, setSysInfos] = useState()
-  const [scope, animate] = useAnimate()
-
+  const [scopeInfoTexts, animateInfoTexts] = useAnimate()
+  const [scopeCharts, animateCharts] = useAnimate()
+  const infoTexts = useRef(
+      {
+        osInfo: null,
+        memoryInfo: null,
+        cpuInfo: null,
+        gpuInfo : null,
+      }
+  );
   // Listen for a message from the main process to get system informations
   useLayoutEffect(()=>{
     ipcRenderer.on('main.get-sys-info', (event, data) => {
       setSysInfos(data)
-    })
 
-    // ipcRenderer.on("main.set-bottom-margin", (event, data)=>{
-    //   console.log(data)
-    // })
+      const {manufacturer, brand, physicalCores, cores} = data.cpuInfo;
+      const { platform, release, arch } = data.osInfo;
+
+      let {controllers : [{name, vram}]} = data.gpuInfo;
+      let [ memInfo, memLayout ] = data.memoryInfo
+
+      let memoryInfo = {sockets: [], total: null};
+
+        memLayout.forEach(mem=>{
+            const { size, type, clockSpeed, manufacturer } = mem
+            memoryInfo.sockets.push(`${convertByteToGb(size)}GB ${type} ${clockSpeed}Mhz ${manufacturer}`)
+        })
+        memoryInfo.total = `${convertByteToGb(memInfo.total).toFixed(1)}GB`
+
+      const cpuInfo = dedent`
+                ${manufacturer ?? 'Unknown'} ${brand ?? 'Unknown'} ${physicalCores ?? 'Unknown'} \
+                ${physicalCores > 1 ? 'Cores' : ' Core'}, ${cores ?? 'Unknown'}
+                ${cores > 1 ? 'Threads' : 'Thread'}`
+
+      const osInfo = `${platform ?? 'Unknown'} ${release ?? 'Unknown'} ${arch ?? 'Unknown'}`
+
+      const gpuInfo = `${name} ${vram}MB`;
+
+
+
+      infoTexts.current = { cpuInfo, osInfo, gpuInfo, memoryInfo }
+
+
+
+    })
   })
 
   useEffect(() => {
     if (sysInfos) {
-      animate('div', { opacity: 1 }, { delay: stagger(0.1, {startDelay: 2}) })
+      (async()=>{
+        await animateInfoTexts('div', { opacity: 1 }, { delay: stagger(0.1, ) })
+        await animateCharts('div', { opacity: 1 }, { delay: stagger(0.1) })
+      })();
     }
   }, [sysInfos])
 
   return (
-    <Box className={'w-full pl-2 pr-2 pt-5'}>
-      <motion.div animate={{ opacity: sysInfos?.cpuInfo ? 0 : 1 }}
-                  initial={{opacity: 1}}
-                  transition={{ duration: sysInfos?.cpuInfo ? .1 : 2}}>
-        <Stack
-          position={'absolute'}
-          top={'50%'}
-          left={'50%'}
-          transform={'translate(-50%, -50%)'}
-          zIndex={100}
-          justifyContent={'center'}
-          alignItems={'center'}
-        >
-          <Spinner color='red.500' />
-          <h1>Loading</h1>
-        </Stack>
-      </motion.div>
+    <Container className={'w-full pl-2 pr-2 pt-5 h-full'}>
 
-      <motion.div
-        animate={{ opacity: sysInfos?.cpuInfo ? 1 : 0 }}
-        initial={{opacity: 0}}
-        transition={{ ease: 'easeOut', duration: 2 }}>
-
-        <Test/>
-
-        <Card backgroundColor={'#d3cdcd'}>
-          <CardHeader>
-            <Heading size="md">System Overview</Heading>
-          </CardHeader>
-
-          <CardBody>
-            <Stack divider={<StackDivider borderColor={'black'} />} spacing="4" ref={scope}>
-              <InfoBox headerText={'OS:'} info={sysInfos?.osInfo} icon={IoLogoWindows} />
-              <InfoBox headerText={'MEMORY:'} info={sysInfos?.memoryInfo} icon={FaMemory} />
-              <InfoBox headerText={'CPU:'} info={sysInfos?.cpuInfo} icon={BsFillCpuFill} />
-              <InfoBox headerText={'GPU:'} info={sysInfos?.gpuInfo} icon={BsGpuCard} />
-            </Stack>
-          </CardBody>
-        </Card>
-      </motion.div>
+          <Loading sysInfos={sysInfos}/>
 
 
-    </Box>
+          <motion.div
+          animate={{ opacity: sysInfos?.cpuInfo ? 1 : 0 }}
+          initial={{opacity: 0}}
+          transition={{ ease: 'easeOut', duration: 2 }}>
+
+
+          <Card backgroundColor={'#d3cdcd'}>
+            <CardHeader>
+              <Heading size="md">System Overview</Heading>
+            </CardHeader>
+
+
+
+            <CardBody>
+              <Stack divider={<StackDivider borderColor={'black'} />} spacing="4" ref={scopeInfoTexts} >
+                <InfoBox headerText={'OS:'} info={infoTexts.current.osInfo} icon={IoLogoWindows} />
+                <MemoryInfo headerText={'MEMORY:'} info={infoTexts.current.memoryInfo} icon={FaMemory} />
+                <InfoBox headerText={'CPU:'} info={infoTexts.current.cpuInfo} icon={BsFillCpuFill} />
+                <InfoBox headerText={'GPU:'} info={infoTexts.current.gpuInfo} icon={BsGpuCard} />
+              </Stack>
+            </CardBody>
+          </Card>
+
+
+
+          <Box
+            ref={scopeCharts}
+            height={'120px'}
+            position={'relative'}
+            marginBottom={'5%'}
+            padding={'1%'}>
+
+            <Heading
+              textAlign={'center'}
+              color={'white'}
+              margin={'20px 0px'}>CPU</Heading>
+
+            <Box as={motion.div} initial={{ opacity: 0 }} height={'100%'}>
+              <CpuChart/>
+            </Box>
+          </Box>
+
+
+        </motion.div>
+
+
+    </Container>
   )
 }
 
