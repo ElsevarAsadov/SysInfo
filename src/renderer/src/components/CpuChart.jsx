@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import SystemInformationService from "../../../services/systemInformationService";
 
 //plugins see chartjs docs I do not have any clue wtf happens here :)))
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -20,28 +21,21 @@ export default function CpuChart() {
     labels,
     datasets: [
       {
-        data: [69, 69, 69],
+        data: [0, 0, 0],
         backgroundColor: '#d3cdcd',
       },
     ],
   });
 
   useEffect(() => {
-    // re-render data
+      // re-render data
     const intervalId = setInterval(() => {
-      setData((prevData) => (
-        {
-          ...prevData,
-
-        datasets: prevData.datasets.map((dataset) => ({
-          ...dataset,
-          data: dataset.data.map(() => Math.random()),
-        }
-        )),
-
-      }
-      ));
+        SystemInformationService.getCpuTemprature().then(x=>setData(c=>{
+            return {...c, datasets:[{data:x.cores, backgroundColor: "#d3cdcd"}]}
+        }))
     }, 2000);
+
+
 
     return () => clearInterval(intervalId);
   }, []);

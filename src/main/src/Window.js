@@ -1,10 +1,11 @@
 import { app, shell, screen, ipcMain, globalShortcut, Tray, BrowserWindow } from 'electron'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { BrowserWindow as AcrylicBrowserWindow } from 'electron-acrylic-window'
-import { checkAcrylicSupport, getWindowPositions, lerp } from "../../helpers/helpers";
+import { checkAcrylicSupport, getWindowPositions, lerp } from "../../helpers/functions";
 import path from 'path'
-import SystemInformationService from "./Services/SystemInformationService";
-import globals from "../../globals"
+import SystemInformationService from "../../services/systemInformationService";
+import globals from "../../helpers/globals"
+import TrayIcon from '../../../resources/icon.png?asset'
 
 
 export default class App {
@@ -35,6 +36,7 @@ export default class App {
   }W
 
   start() {
+
     // This method will be called when Electron has finished
     // initialization and is ready to create browser windows.
     // Some APIs can only be used after this event occurs.
@@ -82,7 +84,7 @@ export default class App {
 
   _initAppTray(){
     //initialize application task bar icon
-    const trayHandler = new Tray(path.join('resources', 'icon.png'))
+    const trayHandler = new Tray(TrayIcon)
     trayHandler.setToolTip('SysInfo')
     trayHandler.on('click', () => this._toggleWindowAnimation())
   }
@@ -134,7 +136,7 @@ export default class App {
 
       this.mainWindow.setPosition(Math.round(this.currentX), Math.round(this.currentY))
 
-      // if animation is end or not
+      // if animation is end then remove interval
       if (Math.round(this.currentX) === targetX && Math.round(this.currentY) === targetY) {
         clearInterval(this.animationInterval)
       }
@@ -144,10 +146,9 @@ export default class App {
   _createWindow() {
 
     const {x, y,  display_height} = getWindowPositions()
-
     const generalWindowOptions = {
       width:   parseInt(globals.WINDOW_WIDTH),
-      height: display_height, //full height
+      height: display_height, //full height,
       show: false,
       x: x * 2,
       y: y,
@@ -176,7 +177,6 @@ export default class App {
 
     //if platform is windows and version is 10 and above make window Arclyic style (transparent)
     if (checkAcrylicSupport()) {
-
       this.mainWindow = new AcrylicBrowserWindow(generalWindowOptions)
       this.mainWindow.setVibrancy(vibrancyWindowOptions)
 
@@ -184,6 +184,7 @@ export default class App {
     else {
       this.mainWindow = new BrowserWindow(generalWindowOptions)
     }
+    //this.mainWindow.webContents.openDevTools()
 
     this.mainWindow.on('ready-to-show', () => {
       this.mainWindow.show()

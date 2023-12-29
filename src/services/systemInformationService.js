@@ -23,7 +23,7 @@ export default class SystemInformationService {
   _pointerToInformationGetter;
 
   constructor() {
-
+    setInterval(()=>si.cpuTemperature().then(d=>console.log(d)), 2000)
     this._pointerToInformationGetter = this.getSystemInformation()
   }
 
@@ -50,7 +50,6 @@ export default class SystemInformationService {
         SystemInformationService.getMemInfo(),
         SystemInformationService.getGpuInfo()
       ])
-
     } catch (e) {
       // ---- TODO: Make communication between main and renderer to handle inner exceptions ---
 
@@ -59,6 +58,11 @@ export default class SystemInformationService {
       // ---- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ---
     }
 
+  }
+
+
+  static async getCpuTemprature(){
+    return await si.cpuTemperature()
   }
 
   static async getCpuInfo() {

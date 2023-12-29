@@ -1,6 +1,6 @@
 import WindowFrame from "./components/WindowFrame";
 import Main from "./components/Main";
-import { checkAcrylicSupport } from "../../helpers/helpers";
+import { checkAcrylicSupport } from "../../helpers/functions";
 import React, {  useLayoutEffect, useRef } from "react";
 import { Stack } from "@chakra-ui/react";
 import ButtonInfo from "./components/ButtonInfo";
@@ -18,7 +18,7 @@ function App() {
 
 
   return (
-    <Stack maxHeight={'100vh'}>
+    <Stack height={'100vh'} maxHeight={'100vh'} >
 
       <WindowFrame/>
 
@@ -28,7 +28,7 @@ function App() {
       flex={1}
       position={'relative'}
       width={'300px'}
-      overflow={'scroll'}
+      overflowY={'scroll'}
       color={'text'}
       >
 

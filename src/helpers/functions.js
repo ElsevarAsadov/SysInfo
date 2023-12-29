@@ -1,6 +1,6 @@
 const electron = require('electron')
 const os = require('os');
-import globals from '../globals'
+import globals from './globals'
 
 export function checkAcrylicSupport(){
   //check it is windows 10 or above
@@ -8,7 +8,6 @@ export function checkAcrylicSupport(){
 }
 
 export function getWindowPositions(){
-
       const workingAreaWidth = electron.screen.getPrimaryDisplay().workAreaSize.width
       const workingAreaHeight = electron.screen.getPrimaryDisplay().workAreaSize.height
 
